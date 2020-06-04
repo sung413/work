@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0,user-scalable=no,maximum-scale=1,width=device-width" />
+        <title>Class chat</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font: 13px Helvetica, Arial; }
+            form { position: fixed; bottom: 0; width: 100%; height: 5%;}
+            form input { height: 100%;width: 79%; margin-right: 0.5%; border: 2px solid #000000;}
+            form button { height: 100%; width: 20%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+            #messages { list-style-type: none; margin: 0; padding: 0; width: 100%; height: 1000px; border: 1px solid #000000; overflow: scroll;}
+            #messages li { padding: 5px 10px;}
+            #messages li:nth-child(odd) { background: #eee; }
+        </style>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  </head>
+  <body>
+        <div id="class_title" class="info"></div>
+        <div id="class_date" class="info"></div>
+        <div id="class_time" class="info"></div>
+        <div class="info">채팅</div>
+        <ul id="messages"></ul>
+        <form action="">
+            <input id="m" autocomplete="off" placeholder="채팅입력"/><button>Send</button>
+        </form>
+  </body>
+  
+<script>
+    $(document).ready(function(){
+        $('#class_title').text("강의명 : "+getCookie("class_title"));
+        $('#class_date').text("날짜 : "+getCookie("class_date"));
+        $('#class_time').text("시간 : "+getCookie("class_time"));
+
+        
+    });
+    $(function () {
+        var class_title = getCookie("class_title");
+        var student_name = getCookie("student_name");
+        /////////////////////////////////////////////////
+        var name = decodeURI(student_name);
+        var room = class_title;
+        var socket = io();
+        socket.emit('chat message', { room : room, name : name, message : "joinsung" });
+        $('form').submit(function(e){
+            e.preventDefault(); // prevents page reloading
+            var msg = $('#m').val();
+            socket.emit('chat message', { room : room, name : name, message : msg });
+            $('#m').val('');
+            return false;
+        });
+        socket.on('chat message', function(msg){
+            var msg_room = msg.room;
+            var msg_name = msg.name;
+            var msg_message = msg.message;
+            if(msg_room == room){
+                if(msg_message == "joinsung"){
+                    $('#messages').append($('<li>').text(msg_name +"님이 입장하였습니다."));
+                }else{
+                    $('#messages').append($('<li>').text(msg_name +" : "+ msg_message));
+                }
+                
+            }
+        });
+
+        ///////////////////////////////////////////////////
+
+        // var socket = io();
+        // $('form').submit(function(e){
+        //     e.preventDefault(); // prevents page reloading
+        //     socket.emit('chat message', $('#m').val());
+        //     $('#m').val('');
+        //     return false;
+        //     });
+        //     socket.on('chat message', function(msg){
+        //     $('#messages').append($('<li>').text(msg));
+        // });
+    });
+    function getCookie(cookiename){
+        var search = cookiename + "=";
+        var cookie = document.cookie;
+
+        // 쿠키가 존재하는 경우
+        if(cookie.length > 0){
+            startindex = cookie.indexOf(cookiename); // 해당 쿠키명이 존재하는지 검색
+            // 존재하는경우
+            if(startindex != -1){
+                startindex += cookiename.length; // 값을 얻기 위해
+                endindex = cookie.indexOf(";", startindex)
+                if(endindex == -1) endindex = cookie.length;
+
+                return unescape(cookie.substring(startindex + 1, endindex));
+            }else{
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }
+</script>
+</html>
